@@ -1,3 +1,12 @@
+# Main reworks 30/04/2025
+
+I decided to refine this utility to close one of my headaches - mass processing of the same type of interiors, and I'm posting this release here.
+
+You need to use the program as well as in the main release.
+
+The "Ad interiors" button is added to the project window, by clicking on which you add the YMAP and YTYP of our interiors.
+
+
 # gtav-audio-occlusion
 
 A tool for generating audio occlusion for V MLOs.
