@@ -8,6 +8,8 @@ Now you can do audio occlusion for multiple interiors at a time in one or more p
 
 If you have any questions - DISCORD gerakols
 
+Ready to download utility https://github.com/Gerakols/gtav-audio-occlusion/releases/download/v2.0.1/gtav-audio-occlusion-win32-x64.rar
+
 
 # gtav-audio-occlusion
 
