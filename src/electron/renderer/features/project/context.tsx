@@ -5,7 +5,7 @@ import { isErr, unwrapResult } from '@/electron/common';
 import { ProjectAPI } from '@/electron/common/types/project';
 import type { SerializedProject } from '@/electron/common/types/project';
 
-import { ProjectState, CreateProjectModalState } from './types';
+import { ProjectState, CreateProjectModalState, AddInteriorModalState } from './types';
 
 interface IProjectProvider {
   children: React.ReactNode;
@@ -17,6 +17,7 @@ interface IProjectContext {
   createProject: () => Promise<void>;
   closeProject: () => Promise<void>;
   writeGeneratedFiles: () => Promise<void>;
+  addInterior: () => Promise<void>;
 
   createModalState: CreateProjectModalState;
   setCreateModalOpen: (open: boolean) => void;
@@ -25,6 +26,12 @@ interface IProjectContext {
   setCreateModalPath: (path: string) => void;
   setCreateModalMapDataFile: (mapDataFile: string) => void;
   setCreateModalMapTypesFile: (mapTypesFile: string) => void;
+
+  addInteriorModalState: AddInteriorModalState;
+  setAddInteriorModalOpen: (open: boolean) => void;
+  setAddInteriorModalInterior: (interior: string) => void;
+  setAddInteriorModalMapDataFile: (mapDataFile: string) => void;
+  setAddInteriorModalMapTypesFile: (mapTypesFile: string) => void;
 }
 
 const { API } = window;
@@ -38,11 +45,19 @@ const createModalinitialState: CreateProjectModalState = {
   mapTypesFilePath: '...',
 };
 
+const addInteriorModalInitialState: AddInteriorModalState = {
+  open: false,
+  interior: '',
+  mapDataFilePath: '...',
+  mapTypesFilePath: '...',
+};
+
 const projectContext = createContext<IProjectContext>({} as IProjectContext);
 
 const useProjectProvider = (): IProjectContext => {
   const [state, setState] = useState<ProjectState>();
   const [createModalState, setCreateModalState] = useState<CreateProjectModalState>(createModalinitialState);
+  const [addInteriorModalState, setAddInteriorModalState] = useState<AddInteriorModalState>(addInteriorModalInitialState);
 
   const fetchProject = async (): Promise<void> => {
     const result: Result<string, SerializedProject | undefined> = await API.invoke(ProjectAPI.GET_CURRENT_PROJECT);
@@ -98,6 +113,24 @@ const useProjectProvider = (): IProjectContext => {
     }
   };
 
+  const addInterior = async (): Promise<void> => {
+    const { interior, mapDataFilePath, mapTypesFilePath } = addInteriorModalState;
+
+    const result: Result<string, boolean> = await API.invoke(ProjectAPI.ADD_INTERIOR, {
+      name: interior,
+      mapDataFilePath,
+      mapTypesFilePath,
+    });
+
+    if (isErr(result)) {
+      return console.warn(unwrapResult(result));
+    }
+
+    await fetchProject();
+
+    setAddInteriorModalState(() => addInteriorModalInitialState);
+  };
+
   const setCreateModalOpen = (open: boolean): void => {
     setCreateModalState(state => ({ ...state, open }));
   };
@@ -122,12 +155,29 @@ const useProjectProvider = (): IProjectContext => {
     setCreateModalState(state => ({ ...state, mapTypesFilePath }));
   };
 
+  const setAddInteriorModalOpen = (open: boolean): void => {
+    setAddInteriorModalState(state => ({ ...state, open }));
+  };
+
+  const setAddInteriorModalInterior = (interior: string): void => {
+    setAddInteriorModalState(state => ({ ...state, interior }));
+  };
+
+  const setAddInteriorModalMapDataFile = (mapDataFilePath: string): void => {
+    setAddInteriorModalState(state => ({ ...state, mapDataFilePath }));
+  };
+
+  const setAddInteriorModalMapTypesFile = (mapTypesFilePath: string): void => {
+    setAddInteriorModalState(state => ({ ...state, mapTypesFilePath }));
+  };
+
   return {
     state,
     fetchProject,
     createProject,
     closeProject,
     writeGeneratedFiles,
+    addInterior,
 
     createModalState,
     setCreateModalOpen,
@@ -136,6 +186,12 @@ const useProjectProvider = (): IProjectContext => {
     setCreateModalPath,
     setCreateModalMapDataFile,
     setCreateModalMapTypesFile,
+
+    addInteriorModalState,
+    setAddInteriorModalOpen,
+    setAddInteriorModalInterior,
+    setAddInteriorModalMapDataFile,
+    setAddInteriorModalMapTypesFile,
   };
 };
 

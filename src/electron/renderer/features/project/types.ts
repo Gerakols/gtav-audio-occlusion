@@ -10,3 +10,10 @@ export type CreateProjectModalState = {
   mapDataFilePath: string;
   mapTypesFilePath: string;
 };
+
+export type AddInteriorModalState = {
+  open: boolean;
+  interior: string;
+  mapDataFilePath: string;
+  mapTypesFilePath: string;
+};

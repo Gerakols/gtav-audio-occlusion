@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { FaTimes, FaFileDownload } from 'react-icons/fa';
+import { FaTimes, FaFileDownload, FaPlus } from 'react-icons/fa';
 
 import { Container, Header, Content } from '@/electron/renderer/components/Page';
 
@@ -8,13 +8,19 @@ import { Interior, InteriorDetails } from '@/electron/renderer/features/interior
 import { useProject } from '../../context';
 
 import { CreateModal } from '../CreateModal';
+import { AddInteriorModal } from '../AddInteriorModal/index.tsx';
 import { ProjectFileImporter } from '../ProjectFileImporter';
 
 export const Project = (): JSX.Element => {
-  const { state, fetchProject, closeProject, writeGeneratedFiles } = useProject();
+  const { state, fetchProject, closeProject, writeGeneratedFiles, setAddInteriorModalOpen } = useProject();
 
   const options = useMemo(
     () => [
+      {
+        icon: <FaPlus />,
+        label: 'Add interior',
+        onClick: () => setAddInteriorModalOpen(true),
+      },
       {
         icon: <FaFileDownload />,
         label: 'Write files',
@@ -26,7 +32,7 @@ export const Project = (): JSX.Element => {
         onClick: closeProject,
       },
     ],
-    [],
+    [setAddInteriorModalOpen],
   );
 
   useEffect(() => {
@@ -52,6 +58,7 @@ export const Project = (): JSX.Element => {
   return (
     <>
       <CreateModal />
+      <AddInteriorModal />
       <Container>
         <Header title={headerTitle} optionalText={headerOptionalTitle} options={options} />
         <Content>

@@ -39,6 +39,7 @@ export class ProjectManager {
     ipcMain.handle(ProjectAPI.SELECT_MAP_DATA_FILE, this.selectMapDataFile.bind(this));
     ipcMain.handle(ProjectAPI.SELECT_MAP_TYPES_FILE, this.selectMapTypesFile.bind(this));
     ipcMain.handle(ProjectAPI.WRITE_GENERATED_FILES, this.writeGeneratedFiles.bind(this));
+    ipcMain.handle(ProjectAPI.ADD_INTERIOR, this.addInteriorToExistingProject.bind(this));
   }
 
   public getCurrentProject(): Result<string, Project> {
@@ -124,6 +125,14 @@ export class ProjectManager {
     return ok(true);
   }
 
+  public async addInteriorToExistingProject(_: Event, interior: CreateInteriorDTO): Promise<Result<string, boolean>> {
+    if (!this.currentProject) {
+      return err('NO_PROJECT_OPEN');
+    }
+
+    return this.addInteriorToProject(this.currentProject, interior);
+  }
+
   public async createProject(_: Event, { name, path, interior }: CreateProjectDTO): Promise<Result<string, boolean>> {
     this.currentProject = new Project({ name, path });
 
@@ -183,21 +192,55 @@ export class ProjectManager {
 
     const project = unwrapResult(projectResult);
 
-    const audioGameData = project.interiors.flatMap(interior => interior.getAudioGameData());
-
-    let filePath: string;
-
-    try {
-      filePath = await this.application.codeWalkerFormat.writeDat151(project.path, audioGameData);
-    } catch {
-      return err('FAILED_TO_WRITE_DAT_151_FILE');
-    }
-
+    // Группировка интерьеров по ytyp файлам
+    const interiorsByTyp: { [ytypPath: string]: Interior[] } = {};
+    
     project.interiors.forEach(interior => {
-      interior.audioGameDataPath = filePath;
+      if (!interiorsByTyp[interior.mapTypesFilePath]) {
+        interiorsByTyp[interior.mapTypesFilePath] = [];
+      }
+      interiorsByTyp[interior.mapTypesFilePath].push(interior);
     });
 
-    return ok(filePath);
+    // Генерация отдельного dat151 файла для каждой группы интерьеров с одинаковым ytyp
+    const generatedFiles: string[] = [];
+    
+    for (const ytypPath in interiorsByTyp) {
+      const interiors = interiorsByTyp[ytypPath];
+      
+      // Для каждого ytyp берем только данные из первого интерьера
+      // Это исключает дублирование данных лимбо и румов
+      const firstInterior = interiors[0];
+      const audioGameData = firstInterior.getAudioGameData();
+      
+      // Создаем уникальное имя папки на основе имени ytyp файла (без пути и расширения)
+      const ytypFileName = path.basename(ytypPath, '.ytyp.xml');
+      const outputDir = path.resolve(project.path, sanitizePath(ytypFileName));
+      
+      // Создаем директорию, если она не существует
+      try {
+        const fs = require('fs');
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+      } catch {
+        return err('FAILED_TO_CREATE_OUTPUT_DIRECTORY');
+      }
+      
+      try {
+        let filePath = await this.application.codeWalkerFormat.writeDat151(outputDir, audioGameData);
+        generatedFiles.push(filePath);
+        
+        // Обновляем путь к аудио файлу для каждого интерьера в этой группе
+        interiors.forEach(interior => {
+          interior.audioGameDataPath = filePath;
+        });
+      } catch {
+        return err('FAILED_TO_WRITE_DAT_151_FILE');
+      }
+    }
+
+    return ok(generatedFiles.join(', '));
   }
 
   public async writeGeneratedFiles(): Promise<Result<string, boolean>> {
