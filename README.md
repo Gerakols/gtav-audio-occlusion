@@ -1,3 +1,12 @@
+# REWORKS 30/04/2025
+
+Hello everyone!
+
+I've had a headache for a long time that you can't do audio occlusion for multiple interiors at once. I took the source code and modified the utility a bit.
+
+Now you can do audio occlusion for multiple interiors at a time in one or more projects.
+
+
 # gtav-audio-occlusion
 
 A tool for generating audio occlusion for V MLOs.
