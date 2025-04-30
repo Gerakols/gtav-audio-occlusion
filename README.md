@@ -6,6 +6,8 @@ I've had a headache for a long time that you can't do audio occlusion for multip
 
 Now you can do audio occlusion for multiple interiors at a time in one or more projects.
 
+If you have any questions - DISCORD gerakols
+
 
 # gtav-audio-occlusion
 
